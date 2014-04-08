@@ -1,4 +1,5 @@
 <?php
+
 include_once './db.php';
 $db = new MyPDO();
 $statement = $db->query("SELECT table_name, column_name, referenced_table_name, referenced_column_name
