@@ -1,5 +1,4 @@
 <?php
-
 include_once './db.php';
 $db = new MyPDO();
 $statement = $db->query("SELECT table_name, column_name, referenced_table_name, referenced_column_name
@@ -37,6 +36,10 @@ $statement = $db->query("show tables");
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         box-shadow: 0px 0px 1px black inset;
         background-color: rgba(255,255,255,0.5);
+    }
+    body, html{
+        box-shadow: none;
+        background-color: none;
     }
     /*    html{
             background-image: url('http://lorempixel.com/400/200/sports/');
@@ -131,24 +134,7 @@ $statement = $db->query("show tables");
     }
     canvas#links{
         position: absolute;
-        width: 100%;
-        height: 100%;
         z-index: -1;
-        background-color: black;
-    }
-    .line{
-        position: absolute;
-        box-shadow: 0px 0px 2px black;
-    }
-    .line.horizontal{
-        height: 2px;
-    }
-    .line.vertical{
-        width: 2px;
-    }
-    .line_container:hover .line{
-        box-shadow: 0px 0px 3px greenyellow, 0px 0px 1px black;
-        background-color: white;   
     }
 </style>
 
@@ -312,7 +298,17 @@ $statement = $db->query("show tables");
         $this.append($parentTables);
     }
     function drawRelations() {
-        $('.line').remove();
+        var $canvas = $('#links').width(0).height(0);
+        var ctx = $canvas.get(0).getContext("2d");
+
+        var newWidth = $(document).width()
+        var newHeight = $(document).height()
+        $canvas.width(newWidth).height(newHeight);
+
+        ctx.canvas.width = newWidth;
+        ctx.canvas.height = newHeight;
+        ctx.clearRect(0, 0, newWidth, newHeight);
+
         $('.search').each(function() {
             var $thisSearch = $(this);
             var $parentsInfo = $thisSearch.find('input.parent');
@@ -332,7 +328,7 @@ $statement = $db->query("show tables");
                     if ($parentRows.size() > 0) {
                         $parentRows.each(function() {
                             var $thisParent = $(this);
-                            drawLine($thisParent, $thisRow);
+                            drawLine($thisParent, $thisRow, ctx);
                         });
                     }
 
@@ -340,14 +336,13 @@ $statement = $db->query("show tables");
             });
         });
     }
-    function drawLine($parent, $child) {
+    function drawLine($parent, $child, ctx) {
         var startX = $parent.offset().left + $parent.width();
         var startY = $parent.offset().top + $parent.height() / 2;
 
         var endX = $child.offset().left;
         var endY = $child.offset().top + $child.height() / 2;
 
-        console.log(startX, startY, endX, endY);
 
         var widthLine = Math.abs(startX - endX) / 2;
         var heightLine = Math.abs(startY - endY);
@@ -370,21 +365,28 @@ $statement = $db->query("show tables");
         }
 
         //line container
-        var $lineContainer = $('<div>').addClass('line_container');
-        $('body').prepend($lineContainer);
+//        var $lineContainer = $('<div>').addClass('line_container');
+//        $('body').prepend($lineContainer);
+//        var $line1 = $('<div>').addClass('line horizontal');
+//        $line1.css('left', startX).css('top', startY).width(widthLine);
+//        $lineContainer.append($line1);
+//        var $line2 = $('<div>').addClass('line vertical');
+//        $line2.css('left', start2X).css('top', start2Y).height(heightLine);
+//        $lineContainer.append($line2);
+//        var $line3 = $('<div>').addClass('line horizontal');
+//        $line3.css('left', start3X).css('top', start3Y).width(widthLine);
+//        $lineContainer.append($line3);
+
         //linea 1
-        var $line1 = $('<div>').addClass('line horizontal');
-        $line1.css('left', startX).css('top', startY).width(widthLine);
-        $lineContainer.append($line1);
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(startX + widthLine, startY);
         //line 2
-
-        var $line2 = $('<div>').addClass('line vertical');
-        $line2.css('left', start2X).css('top', start2Y).height(heightLine);
-        $lineContainer.append($line2);
-
+        ctx.moveTo(start2X, start2Y);
+        ctx.lineTo(start2X, start2Y + heightLine);
         //line3
-        var $line3 = $('<div>').addClass('line horizontal');
-        $line3.css('left', start3X).css('top', start3Y).width(widthLine);
-        $lineContainer.append($line3);
+        ctx.moveTo(start3X, start3Y);
+        ctx.lineTo(start3X + widthLine, start3Y);
+
+        ctx.stroke();
     }
 </script>
