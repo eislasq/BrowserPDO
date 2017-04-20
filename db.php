@@ -4,7 +4,7 @@ ini_set('display_errors', 'On');
 
 class MyPDO extends PDO {
     
-    const dbName='mediclub';
+    const dbName='TicketsClubMedico';
 
     function __construct($dsn = NULL, $user = NULL, $pass = NULL, $driver_options = NULL) {
         $host = '127.0.0.1';

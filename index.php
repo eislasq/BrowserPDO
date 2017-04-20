@@ -37,7 +37,7 @@ $statement = $db->query("show tables");
     *{
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         box-shadow: 0px 0px 1px black inset;
-        background-color: rgba(255,255,255,0.5);
+        /*background-color: rgba(255,255,255,0.5);*/
     }
     body, html{
         box-shadow: none;
@@ -84,6 +84,7 @@ $statement = $db->query("show tables");
         min-height: 30px;
         min-width: 30px;
         position: absolute!important;
+        background-color: rgba(255,255,255,0.5);
     }
     .search:hover{
         background-color: rgba(255,255,255,0.9);
@@ -93,6 +94,7 @@ $statement = $db->query("show tables");
     }
     .table_name{
         cursor: move;
+        background-color: green;
     }
     .remove{
         visibility: hidden;
@@ -125,9 +127,20 @@ $statement = $db->query("show tables");
         border-radius: 0px 100px 115px 100px;
         margin-top: -20px;
     }
-    .search tbody tr:hover{
+    .search tbody tr:hover, .search tbody tr.over{
         background-color: greenyellow;
     }
+
+    .search td, .search th{
+        border: solid lightgray;
+        border-width: 0px 1px 1px 0px;
+        box-shadow: none;
+        max-width: 100px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        max-height: 32px;
+    }
+
     .children_table, .parent_table{
         cursor: pointer;
     }
@@ -142,6 +155,107 @@ $statement = $db->query("show tables");
 
 <script>
     jQuery(document).ready(function ($) {
+        $('body').on("mouseenter", "tr", function () {
+            var $thisRow = $(this);
+            var $thisSearch = $thisRow.parents('.search');
+            var $parentsInfo = $thisSearch.find('input.parent');
+            var $canvas = $('#links');
+            var ctx = $canvas.get(0).getContext("2d");
+            $parentsInfo.each(function () {
+                var $thisParentInfo = $(this);
+                var parentTable = $thisParentInfo.attr('table_ref');
+                var parentColumn = $thisParentInfo.attr('column_ref');
+                var column = $thisParentInfo.attr('column');
+                var searchFor = $thisRow.children('[column=' + column + ']').text().trim();
+                var parentFilter = '.search[name=' + parentTable + '] tbody tr td[column=' + parentColumn + ']';
+                //console.log(parentFilter);
+                var $parentRows = $(parentFilter).filter(function () {
+                    return $(this).text() === searchFor;
+                }).parent();
+                if ($parentRows.size() > 0) {
+                    $parentRows.each(function () {
+                        var $thisParent = $(this);
+                        $thisParent.addClass('over');
+                        drawLine($thisParent, $thisRow, ctx, '#ffffff', 5);
+                        drawLine($thisParent, $thisRow, ctx, '#ff0000', 2);
+                    });
+                }
+
+            });
+
+//            ######### Clindrens
+            var tableName = $thisSearch.attr('name');
+            var $inputChildren = $('.search input[table_ref=' + tableName + ']');
+            $('.children_tables').remove();
+            $inputChildren.each(function () {
+                var $childrenInfo = $(this);
+                var childrenTableName = $childrenInfo.parents('.search').attr('name');
+                var childrenColumn = $childrenInfo.attr('column');
+                var searchFor = $thisRow.children('[column=' + childrenColumn + ']').text().trim();
+                var childrenFilter = '.search[name=' + childrenTableName + '] tbody tr td[column=' + childrenColumn + ']';
+                var $childrenRows = $(childrenFilter).filter(function () {
+                    return $(this).text() === searchFor;
+                }).parent();
+                if ($childrenRows.size() > 0) {
+                    $childrenRows.each(function () {
+                        var $thisChildren = $(this);
+                        $thisChildren.addClass('over');
+                        drawLine($thisRow, $thisChildren, ctx, '#ffffff', 5);
+                        drawLine($thisRow, $thisChildren, ctx, '#ff0000', 2);
+                    });
+                }
+            });
+
+        });
+        $('body').on("mouseleave", "tr", function () {
+            var $thisRow = $(this);
+            var $thisSearch = $thisRow.parents('.search');
+            var $parentsInfo = $thisSearch.find('input.parent');
+            var $canvas = $('#links');
+            var ctx = $canvas.get(0).getContext("2d");
+            $parentsInfo.each(function () {
+                var $thisParentInfo = $(this);
+                var parentTable = $thisParentInfo.attr('table_ref');
+                var parentColumn = $thisParentInfo.attr('column_ref');
+                var column = $thisParentInfo.attr('column');
+                var searchFor = $thisRow.children('[column=' + column + ']').text().trim();
+                var parentFilter = '.search[name=' + parentTable + '] tbody tr td[column=' + parentColumn + ']';
+                //console.log(parentFilter);
+                var $parentRows = $(parentFilter).filter(function () {
+                    return $(this).text() === searchFor;
+                }).parent();
+                if ($parentRows.size() > 0) {
+                    $parentRows.each(function () {
+                        var $thisParent = $(this);
+                        $thisParent.removeClass('over');
+                        drawLine($thisParent, $thisRow, ctx, '#000000', 2);
+                    });
+                }
+
+            });
+
+            //            ######### Clindrens
+            var tableName = $thisSearch.attr('name');
+            var $inputChildren = $('.search input[table_ref=' + tableName + ']');
+            $('.children_tables').remove();
+            $inputChildren.each(function () {
+                var $childrenInfo = $(this);
+                var childrenTableName = $childrenInfo.parents('.search').attr('name');
+                var childrenColumn = $childrenInfo.attr('column');
+                var searchFor = $thisRow.children('[column=' + childrenColumn + ']').text().trim();
+                var childrenFilter = '.search[name=' + childrenTableName + '] tbody tr td[column=' + childrenColumn + ']';
+                var $childrenRows = $(childrenFilter).filter(function () {
+                    return $(this).text() === searchFor;
+                }).parent();
+                if ($childrenRows.size() > 0) {
+                    $childrenRows.each(function () {
+                        var $thisChildren = $(this);
+                        $thisChildren.removeClass('over');
+                        drawLine($thisRow, $thisChildren, ctx, '#000000', 2);
+                    });
+                }
+            });
+        });
         $('.table').click(function () {
             var $this = $(this);
             var table = $this.attr('name');
@@ -172,7 +286,26 @@ $statement = $db->query("show tables");
             $search.append($this.children('input').clone());
             $search.effect("highlight");
             getColumns($search)
+
+            //#get more left
+            var $lefter = $('.search').first();
+            $('.search').each(function (ky, element) {
+                var $element = $(element);
+                if ($element.offset().left > $lefter.offset().left) {
+                    $lefter = $element;
+                }
+            });
+            $search.css('left', $lefter.offset().left);
         });
+
+
+
+        $('#tables div').each(function () {
+            $(this).click();
+        });
+        $('.search .do_search').first().click();
+        $('.search .do_search').last().click();
+
     });
     function getColumns($search) {
         var table = $search.attr('name');
@@ -330,7 +463,7 @@ $statement = $db->query("show tables");
                     if ($parentRows.size() > 0) {
                         $parentRows.each(function () {
                             var $thisParent = $(this);
-                            drawLine($thisParent, $thisRow, ctx);
+                            drawLine($thisParent, $thisRow, ctx, '#000000', 2);
                         });
                     }
 
@@ -338,33 +471,47 @@ $statement = $db->query("show tables");
             });
         });
     }
-    function drawLine($parent, $child, ctx) {
+    function drawLine($parent, $child, ctx, colorString, lineWidth) {
+
+        var randOffset = Math.round(Math.random() * 10);
+        if (Math.round(Math.random() * 2) % 2 === 0) {
+            randOffset *= -1;
+        }
+        randOffset = 0;
+
+
         var startX = $parent.offset().left + $parent.width();
         var startY = $parent.offset().top + $parent.height() / 2;
+
 
         var endX = $child.offset().left;
         var endY = $child.offset().top + $child.height() / 2;
 
-
-        var widthLine = Math.abs(startX - endX) / 2;
-        var heightLine = Math.abs(startY - endY);
-
-        var start2X = startX + widthLine;
-        var start2Y = startY;
-
-        var start3X = start2X;
-        var start3Y = start2Y + heightLine;
-
         if (endX < startX) {
-            startX -= widthLine;
-            start2X -= 2 * widthLine;
-            start3X -= 3 * widthLine;
+            endX = $child.offset().left + $child.width();
+            startX = $parent.offset().left;
         }
 
-        if (endY < start2Y) {
-            start2Y = endY;
-            start3Y -= 2 * heightLine;
-        }
+
+//        var widthLine = Math.abs(startX - endX) / 2;
+//        var heightLine = Math.abs(startY - endY);
+//
+//        var start2X = startX + widthLine;
+//        var start2Y = startY;
+//
+//        var start3X = start2X;
+//        var start3Y = start2Y + heightLine;
+//
+//        if (endX < startX) {
+//            startX -= widthLine;
+//            start2X -= 2 * widthLine;
+//            start3X -= 3 * widthLine;
+//        }
+////
+//        if (endY < start2Y) {
+//            start2Y = endY;
+//            start3Y -= 2 * heightLine;
+//        }
 
         //line container
 //        var $lineContainer = $('<div>').addClass('line_container');
@@ -379,15 +526,33 @@ $statement = $db->query("show tables");
 //        $line3.css('left', start3X).css('top', start3Y).width(widthLine);
 //        $lineContainer.append($line3);
 
+        ctx.beginPath();
+
+        if (typeof lineWidth === undefined) {
+            lineWidth = 1;
+        }
+        ctx.lineWidth = lineWidth;
         //linea 1
         ctx.moveTo(startX, startY);
-        ctx.lineTo(startX + widthLine, startY);
-        //line 2
-        ctx.moveTo(start2X, start2Y);
-        ctx.lineTo(start2X, start2Y + heightLine);
-        //line3
-        ctx.moveTo(start3X, start3Y);
-        ctx.lineTo(start3X + widthLine, start3Y);
+//        ctx.lineTo(startX + widthLine, startY);
+//        //line 2
+//        ctx.moveTo(start2X, start2Y);
+//        ctx.lineTo(start2X, start2Y + heightLine);
+//        //line3
+//        ctx.moveTo(start3X, start3Y);
+//        ctx.lineTo(start3X + widthLine, start3Y);
+        ctx.lineTo(endX, endY);
+
+        if (typeof colorString === undefined) {
+            colorString = "#";
+            for (var i = 0; i < 6; i++) {
+                var randNumber = Math.round(Math.random() * 10);
+                colorString += randNumber.toString(16);
+            }
+            console.log(colorString);
+        }
+
+        ctx.strokeStyle = colorString;
 
         ctx.stroke();
     }
