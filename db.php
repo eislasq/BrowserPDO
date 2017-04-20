@@ -3,6 +3,8 @@ ini_set('error_reporting', E_ALL);
 ini_set('display_errors', 'On');
 
 class MyPDO extends PDO {
+    
+    const dbName='mediclub';
 
     function __construct($dsn = NULL, $user = NULL, $pass = NULL, $driver_options = NULL) {
         $host = '127.0.0.1';
@@ -10,9 +12,9 @@ class MyPDO extends PDO {
             $user = 'root';
         }
         if (NULL === $pass) {
-            $pass = 'toor';
+            $pass = '';
         }
-        $dbname = 'biztram';
+        $dbname = self::dbName;
         $driver = 'mysql';
 
         if (NULL === $dsn) {

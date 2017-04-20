@@ -1,9 +1,10 @@
 <?php
 include_once './db.php';
 $db = new MyPDO();
+$dbName = MyPDO::dbName;
 $statement = $db->query("SELECT table_name, column_name, referenced_table_name, referenced_column_name
 FROM INFORMATION_SCHEMA.key_column_usage 
-WHERE referenced_table_schema = 'biztram' 
+WHERE referenced_table_schema = '$dbName' 
   AND referenced_table_name IS NOT NULL 
 ORDER BY table_name, column_name");
 $references = array();
@@ -19,7 +20,8 @@ $statement = $db->query("show tables");
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css" />
 <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
-<canvas id="links"></canvas>
+<canvas id="links" style="border-right-width: 300px; border-bottom-width: 300px; border-style: solid; border-color: lightgray;
+        background-image: url(grid.png);"></canvas>
 <div id="tables">
     <?php while ($table = $statement->fetch(PDO::FETCH_COLUMN)) : ?>
         <div class="table" name="<?php echo $table; ?>"><?php echo $table; ?>
@@ -139,8 +141,8 @@ $statement = $db->query("show tables");
 </style>
 
 <script>
-    jQuery(document).ready(function($) {
-        $('.table').click(function() {
+    jQuery(document).ready(function ($) {
+        $('.table').click(function () {
             var $this = $(this);
             var table = $this.attr('name');
             var $search = $('<div>').addClass('search ').attr('name', table).css('left', '50px');
@@ -148,7 +150,7 @@ $statement = $db->query("show tables");
             $search.draggable({
                 handle: '.table_name',
                 snap: true,
-                stop: function(event, ui) {
+                stop: function (event, ui) {
                     if (ui.position.left < 0) {
                         ui.helper.css('left', 0);
                     }
@@ -162,7 +164,7 @@ $statement = $db->query("show tables");
             $search.append($tableName);
             /////////////////    remove the search
             var $remove = $('<span>').text('X').addClass('remove');
-            $remove.click(function() {
+            $remove.click(function () {
                 $(this).parents('.search').remove();
                 drawRelations();
             });
@@ -178,7 +180,7 @@ $statement = $db->query("show tables");
             , url: 'ajax.php'
             , async: false
             , type: 'POST'
-            , success: function(response) {
+            , success: function (response) {
                 var $results = $('<table>');
                 var $resultsHeader = $('<thead>');
                 $results.append($resultsHeader);
@@ -186,7 +188,7 @@ $statement = $db->query("show tables");
                 $resultsHeader.append($columns);
                 //////// crear results
                 var $columnClear = $('<th>').html('X').addClass('remove');
-                $columnClear.click(function() {
+                $columnClear.click(function () {
                     var $tbody = $search.find('tbody');
                     $search.find('th input').val('');
                     $tbody.children().remove();
@@ -217,12 +219,12 @@ $statement = $db->query("show tables");
         $tbody.children().remove();
         var table = $thisSearch.attr('name');
         var params = $thisSearch.find('th input').serializeArray();
-        $.post('ajax.php', {action: 'doSearch', table: table, params: params}, function(response) {
+        $.post('ajax.php', {action: 'doSearch', table: table, params: params}, function (response) {
             for (var ky in response) {
                 var row = response[ky];
                 var $tr = $('<tr>');
                 $tbody.append($tr);
-                $thisSearch.find('th').each(function(ky, th) {
+                $thisSearch.find('th').each(function (ky, th) {
                     var $th = $(th);
                     var $td = $('<td>');
                     var column = $th.attr('column');
@@ -231,11 +233,11 @@ $statement = $db->query("show tables");
                     $tr.append($td);
                 });
                 //show childrens List
-                $tr.children().last().html('&disin;').addClass('show_children_tables').hover(showChildrenTables, function() {
+                $tr.children().last().html('&disin;').addClass('show_children_tables').hover(showChildrenTables, function () {
                     $(this).children().remove();
                 });
                 //show parents List
-                $tr.children().first().html('&leftarrow;').addClass('show_parent_tables').hover(showParentTables, function() {
+                $tr.children().first().html('&leftarrow;').addClass('show_parent_tables').hover(showParentTables, function () {
                     $(this).children().remove();
                 });
                 drawRelations();
@@ -249,7 +251,7 @@ $statement = $db->query("show tables");
         var $inputChildren = $('#tables input[table_ref=' + tableName + ']');
         $('.children_tables').remove();
         var $childrenTables = $('<div>').addClass('children_tables');
-        $inputChildren.each(function() {
+        $inputChildren.each(function () {
             var $childrenInfo = $(this);
             var childrenTableName = $childrenInfo.parent().attr('name');
             var $childrenTable = $('<div>').addClass('children_table')
@@ -284,7 +286,7 @@ $statement = $db->query("show tables");
         var $inputParent = $thisSearch.find('input.parent');
         $('.parent_tables').remove();
         var $parentTables = $('<div>').addClass('parent_tables');
-        $inputParent.each(function() {
+        $inputParent.each(function () {
             var $parentInfo = $(this);
             var parentTableName = $parentInfo.attr('table_ref');
             var $parentTable = $('<div>').addClass('parent_table')
@@ -309,12 +311,12 @@ $statement = $db->query("show tables");
         ctx.canvas.height = newHeight;
         ctx.clearRect(0, 0, newWidth, newHeight);
 
-        $('.search').each(function() {
+        $('.search').each(function () {
             var $thisSearch = $(this);
             var $parentsInfo = $thisSearch.find('input.parent');
-            $thisSearch.find('tbody tr').each(function() {
+            $thisSearch.find('tbody tr').each(function () {
                 var $thisRow = $(this);
-                $parentsInfo.each(function() {
+                $parentsInfo.each(function () {
                     var $thisParentInfo = $(this);
                     var parentTable = $thisParentInfo.attr('table_ref');
                     var parentColumn = $thisParentInfo.attr('column_ref');
@@ -322,11 +324,11 @@ $statement = $db->query("show tables");
                     var searchFor = $thisRow.children('[column=' + column + ']').text().trim();
                     var parentFilter = '.search[name=' + parentTable + '] tbody tr td[column=' + parentColumn + ']';
                     //console.log(parentFilter);
-                    var $parentRows = $(parentFilter).filter(function() {
+                    var $parentRows = $(parentFilter).filter(function () {
                         return $(this).text() === searchFor;
                     }).parent();
                     if ($parentRows.size() > 0) {
-                        $parentRows.each(function() {
+                        $parentRows.each(function () {
                             var $thisParent = $(this);
                             drawLine($thisParent, $thisRow, ctx);
                         });
